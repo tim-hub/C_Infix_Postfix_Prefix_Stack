@@ -11,6 +11,7 @@ Author: Tim
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct node{
     char     data;
@@ -39,7 +40,7 @@ void printNodesCount(StackHead *myStack){
     //     printf("Stack is deleted");
     // }
     else {
-        printf ("%d elements in stak\n", myStack->count);   
+        printf ("%d elements in stack\n", myStack->count);   
         
     }
 }
@@ -82,7 +83,7 @@ char Pop(StackHead *myStack) {
     pTop = NULL;
   }
   else {
-    printf("Stack is empty.\n");
+    printf("Stack is empty When Popping.\n");
   }
   return rv;
 }
@@ -112,42 +113,181 @@ void Populate(StackHead *myStack, int n) {
     }
 }
 
-
-char *infix2postfix(char *infixstr){
-
+int isALetter(char ch)
+{
+    // in this assignment, letter is trated as a numebr between operators
+    return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z');
 }
 
-char *infix2prefix(char *infixstr){
+int getPriority(char ch)
+{
+    switch (ch)
+    {
+    case '+':
+    case '-':
+        return 1;
+ 
+    case '*':
+    case '/':
+        return 2;
+ 
+    case '^':
+        return 3;
+    }
+    return -1;
+}
 
+void strrev(char * str)
+{
+    /*
+    Reversing a string in C. (n.d.). Retrieved from https://stackoverflow.com/questions/784417/reversing-a-string-in-c 
+    */
+
+    /* skip null */
+    if (str == 0)
+    {
+        return;
+    }
+
+    /* skip empty string */
+    if (*str == 0)
+    {
+        return;
+    }
+
+    /* get range */
+    char *start = str;
+    char *end = start + strlen(str) - 1; /* -1 for \0 */
+    char temp;
+
+    /* reverse */
+    while (end > start)
+    {
+        /* swap */
+        temp = *start;
+        *start = *end;
+        *end = temp;
+
+        /* move */
+        ++start;
+        --end;
+    }
+}
+
+
+int *infix2postfix(char *infixstr){
+    int length = strlen(infixstr);
+    char ch;
+
+    int i;
+    int ii;
+
+    StackHead *myStack = CreateStack();
+
+    if (!myStack) {
+        return -1;
+    }
+
+    for ( i=0, ii=-1; i< length; ++i){
+        ch = infixstr[i];
+
+        if ( isALetter(ch)){
+            
+            infixstr[++ii] = ch;
+        }
+        else if ( ch == '(' ) {
+            // push it to stack
+            Push(myStack, ch);
+
+        }else if (ch == ')'){
+            // pop and output from stack unti finding ()
+            while (myStack->count!=0 && myStack-> top -> data != '('){
+                infixstr[++ii] = Pop(myStack);
+            }
+
+            if (myStack->count!=0 && myStack-> top -> data != '('){
+                printf("Wrong expression\n");
+                return -1;
+            }else {
+                Pop (myStack);
+            }
+        }else{
+            // an operator
+            while (myStack->count!=0 && getPriority(ch) <= getPriority(myStack-> top -> data)){
+                infixstr[++ii] = Pop(myStack);
+            }
+            Push(myStack, ch);
+        }
+    }
+    // pop all operators
+    while (myStack->count!=0){
+        infixstr[++ii] = Pop(myStack);
+    }
+    infixstr[++ii] ='\0';
+    // printf("%s \n", infixstr );
+}
+
+int *infix2prefix(char *infixstr){
+    int length = strlen(infixstr);
+    // rever the char array
+    strrev(infixstr);
+    char ch;
+
+    // swap ( and )
+    for (int i = 0; i < length; i++) {
+ 
+        if (infixstr[i] == '(') {
+            infixstr[i] = ')';
+            i++;
+        }
+        else if (infixstr[i] == ')') {
+            infixstr[i] = '(';
+            i++;
+        }
+    }
+
+    // transform it to postfix
+    infix2postfix(infixstr);
+    strrev(infixstr);
 }
 
 
 
 int main()
 {
-    StackHead *myStack;
+    // StackHead *myStack;
 
-    // create
-    myStack = CreateStack();
-    printNodesCount(myStack);
-    // populate
-    int n = 7;
-    Populate (myStack, n);
+    // // create
+    // myStack = CreateStack();
     // printNodesCount(myStack);
-    printStack(myStack);
+    // // populate
+    // int n = 7;
+    // Populate (myStack, n);
+    // // printNodesCount(myStack);
+    // printStack(myStack);
     
-    // testt drop one
-    char l = Pop(myStack);
-    printf ("Data Poped %c \n and now there are ", l);
-    // printNodesCount(myStack);
-    printStack(myStack);
+    // // testt drop one
+    // char l = Pop(myStack);
+    // printf ("Data Poped %c \n and now there are ", l);
+    // // printNodesCount(myStack);
+    // printStack(myStack);
+
+    char expression1[]= "A*(B+C/D)^E-F*(G-H)";
+
+    printf("Enter the expression: \n");
+    scanf("%s", expression1);
 
 
 
-    // test to empty stack
-    // CleanStack(myStack);
-    // printNodesCount(myStack);
-    
-    // test to delete the stack
-    // DeleteStack(myStack);
+    // the right output should be ABCD/+E^*FGH-*-
+    printf("original infix %s\n", expression1);
+    infix2postfix(expression1);
+    printf("postfix %s\n", expression1);
+
+    infix2prefix(expression1);
+    printf("prefix %s\n", expression1);
+
+
+
+
 }
